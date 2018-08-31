@@ -1,0 +1,9 @@
+{
+    "extends": "airbnb-base",
+    "parserOptions": {
+        "sourceType": "script"
+    },
+    "rules": {
+        "import/no-unresolved": [ 2, { "caseSensitive": false } ]
+    }
+}

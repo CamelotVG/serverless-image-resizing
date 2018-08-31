@@ -10,6 +10,13 @@
     "sharp": "^0.17.3"
   },
   "devDependencies": {
-    "aws-sdk": "^2.36.0"
+    "aws-sdk": "^2.36.0",
+    "eslint": "^5.4.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint index.js"
   }
 }
