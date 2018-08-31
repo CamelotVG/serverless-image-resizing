@@ -23,7 +23,7 @@ image will be served from S3 directly.
    - Use the Amazon Linux Docker container image to build the package using your
      local system. This repo includes Makefile that will download Amazon Linux,
      install Node.js and developer tools, and build the extensions using Docker.
-     Run `make all`.
+     Run `make dist`.
 
 2. Deploy the CloudFormation stack
 
