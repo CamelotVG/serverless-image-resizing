@@ -1,7 +1,5 @@
 FROM amazonlinux
 
-ADD etc/nodesource.gpg.key /etc
-
 WORKDIR /tmp
 
 RUN yum -y install gcc-c++ make && \
