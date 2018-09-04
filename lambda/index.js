@@ -24,6 +24,15 @@ const contentTypeFormatMap = {
   'image/tiff': 'tiff',
 };
 
+const contentTypeOptionsMap = {
+  // Each output format has lots of options
+  // http://sharp.dimens.io/en/stable/api-output/#parameters_3
+  'image/jpeg': { quality: 90 },
+  'image/png': {},
+  'image/webp': { quality: 90 },
+  'image/tiff': { compression: 'lzw' },
+};
+
 
 // Error response definitions
 function invalidPathResponse() {
@@ -143,7 +152,7 @@ exports.handler = async function handler(event, context, callback) {
   try {
     buffer = await Sharp(data.Body)
       .resize(width, height)
-      .toFormat(contentTypeFormatMap[data.ContentType])
+      .toFormat(contentTypeFormatMap[data.ContentType], contentTypeOptionsMap[data.ContentType])
       .toBuffer();
   } catch (e) {
     callback(e);
