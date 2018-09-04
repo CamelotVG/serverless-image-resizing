@@ -37,6 +37,12 @@ image will be served from S3 directly.
 
     For example: *300x300,90x90,40x40*.
 
+## Development
+
+1. `cd lambda` then `npm install`
+2. All of the code is in `index.js`
+3. Lint the with `npm run lint`. (Uses the airbnb style guide, standard for SDC).
+
 ## License
 
 This reference architecture sample is [licensed][license] under Apache 2.0.

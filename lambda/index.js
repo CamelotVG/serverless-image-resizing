@@ -21,6 +21,7 @@ const contentTypeFormatMap = {
   'image/jpeg': 'jpeg',
   'image/png': 'png',
   'image/webp': 'webp',
+  'image/tiff': 'tiff',
 };
 
 
