@@ -3,15 +3,16 @@
 // Bootstrap and config
 const AWS = require('aws-sdk');
 const Sharp = require('sharp');
-
+const { URL } = require('url');
 
 const S3 = new AWS.S3({
   signatureVersion: 'v4',
 });
 
-const { BUCKET, URL } = process.env;
-const ALLOWED_DIMENSIONS = new Set();
+const { BUCKET, REDIRECT_BASE_URL } = process.env;
+const PRESIGNED_EXPIRATION_SECONDS = parseInt(process.env.PRESIGNED_EXPIRATION_SECONDS, 10);
 
+const ALLOWED_DIMENSIONS = new Set();
 if (process.env.ALLOWED_DIMENSIONS) {
   const dimensions = process.env.ALLOWED_DIMENSIONS.split(/\s*,\s*/);
   dimensions.forEach(dimension => ALLOWED_DIMENSIONS.add(dimension));
@@ -175,10 +176,21 @@ exports.handler = async function handler(event, context, callback) {
   }
 
 
+  // Get a presigned url for the newly saved image.
+  const signedUrl = S3.getSignedUrl('getObject',
+    { Bucket: BUCKET, Key: key, Expires: PRESIGNED_EXPIRATION_SECONDS });
+  // TODO: Make sure this actually works! https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#getSignedUrl-property
+  // Parse the url and use the configured base url instead.
+  const parsedUrl = new URL(signedUrl);
+  const resultUrl = new URL(REDIRECT_BASE_URL);
+  resultUrl.pathname = parsedUrl.pathname;
+  resultUrl.search = parsedUrl.search;
+  const redirectTo = resultUrl.toString();
+
   // Redirect to the newly created image
   callback(null, {
-    statusCode: '301',
-    headers: { location: `${URL}/${key}` },
+    statusCode: '303',
+    headers: { location: redirectTo },
     body: '',
   });
 };

@@ -9,7 +9,8 @@ const sinon = require('sinon');
 describe('The image resize function', () => {
   beforeEach(() => {
     process.env.BUCKET = 'example-bucket';
-    process.env.URL = 'https://s3-example.amazonaws.com/example-bucket';
+    process.env.REDIRECT_BASE_URL = 'https://configurable.url.com';
+    process.env.PRESIGNED_EXPIRATION_SECONDS = '30';
 
     const getObjectsPromise = new Promise((resolve) => {
       resolve({
@@ -25,6 +26,8 @@ describe('The image resize function', () => {
 
     const getObjectStub = sinon.stub();
     const putObjectStub = sinon.stub();
+    const getSignedUrlStub = sinon.stub();
+    this.getSignedUrlStub = getSignedUrlStub; // return value set in test
 
     getObjectStub.returns({ promise: () => getObjectsPromise });
     putObjectStub.returns({ promise: () => putObjectsPromise });
@@ -33,6 +36,7 @@ describe('The image resize function', () => {
       return {
         getObject: getObjectStub,
         putObject: putObjectStub,
+        getSignedUrl: getSignedUrlStub,
       };
     }
     patcher('aws-sdk', { S3: s3Constructor });
@@ -61,8 +65,9 @@ describe('The image resize function', () => {
   });
 
   afterEach(() => {
-    delete process.env.URL;
-    delete process.env.BUCKET;
+    process.env.BUCKET = undefined;
+    process.env.REDIRECT_BASE_URL = undefined;
+    process.env.PRESIGNED_EXPIRATION_SECONDS = undefined;
     patcher.stop('aws-sdk');
     patcher.stop('sharp');
   });
@@ -73,12 +78,14 @@ describe('The image resize function', () => {
         key: 'resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123',
       },
     };
-    const resultUrl = 'https://s3-example.amazonaws.com/example-bucket/resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123';
+    const s3Url = 'https://s3-us-west-1.amazonaws.com/example-bucket/resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123?AWSAccessKeyId=key&Expires=12345&Signature=signature';
+    this.getSignedUrlStub.returns(s3Url);
+    const resultUrl = 'https://configurable.url.com/example-bucket/resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123?AWSAccessKeyId=key&Expires=12345&Signature=signature';
 
     function callback(error, result) {
       expect(error).toBe(null);
       expect(result).toEqual({
-        statusCode: '301',
+        statusCode: '303',
         headers: { location: resultUrl },
         body: '',
       });
