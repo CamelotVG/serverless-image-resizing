@@ -40,8 +40,9 @@ image will be served from S3 directly.
 ## Development
 
 1. `cd lambda` then `npm install`
-2. All of the code is in `index.js`
+2. All of the code is in `index.js` and tests are in the `spec` directory.
 3. Lint the with `npm run lint`. (Uses the airbnb style guide, standard for SDC).
+4. Run tests with `npm test`
 
 ## License
 

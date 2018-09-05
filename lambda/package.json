@@ -14,9 +14,13 @@
     "eslint": "^5.4.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.14.0"
+    "eslint-plugin-import": "^2.14.0",
+    "jasmine": "^3.2.0",
+    "mock-require": "^3.0.2",
+    "sinon": "^6.2.0"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint index.js"
+    "lint": "./node_modules/.bin/eslint *.js spec/*.js",
+    "test": "jasmine"
   }
 }
