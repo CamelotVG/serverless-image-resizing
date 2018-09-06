@@ -16,7 +16,7 @@ describe('The image resize function', () => {
       resolve({
         Metadata: { example: 'value' },
         Body: 'original image data',
-        ContentType: 'image/jpeg',
+        ContentType: 'image/jpeg; name=something',
       });
     });
 

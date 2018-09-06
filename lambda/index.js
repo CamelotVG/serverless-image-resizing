@@ -18,20 +18,15 @@ if (process.env.ALLOWED_DIMENSIONS) {
   dimensions.forEach(dimension => ALLOWED_DIMENSIONS.add(dimension));
 }
 
-const contentTypeFormatMap = {
-  'image/jpeg': 'jpeg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/tiff': 'tiff',
-};
+const supportedFormats = new Set(['jpeg', 'png', 'webp', 'tiff']);
 
-const contentTypeOptionsMap = {
+const imageFormatOptionsMap = {
   // Each output format has lots of options
   // http://sharp.dimens.io/en/stable/api-output/#parameters_3
-  'image/jpeg': { quality: 90 },
-  'image/png': {},
-  'image/webp': { quality: 90 },
-  'image/tiff': { compression: 'lzw' },
+  jpeg: { quality: 90 },
+  png: {},
+  webp: { quality: 90 },
+  tiff: { compression: 'lzw' },
 };
 
 
@@ -60,13 +55,13 @@ function invalidDimensionsResponse() {
 }
 
 function unsupportedFormatResponse() {
-  const contentTypes = Object.keys(contentTypeFormatMap).join(', ');
+  const imageFormats = Array.from(supportedFormats).join(', ');
   return {
     statusCode: '400',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       code: 'UNSUPPORTED_FORMAT',
-      message: `Supported content types: ${contentTypes}`,
+      message: `Supported image formats: ${imageFormats}`,
     }),
   };
 }
@@ -94,6 +89,7 @@ exports.handler = async function handler(event, context, callback) {
   // example: ['resize','75c06d3b-4342-4ab8-aa37-b1f01d654ac1','private','avatar','50x60-img123']
   if (fullPath.length < 2 || fullPath[0] !== 'resize') {
     // has to start with 'resize' and end with the asset name, can have more paths in between.
+    console.warn(`Invalid path ${key}`);
     callback(null, invalidPathResponse());
     return;
   }
@@ -105,6 +101,7 @@ exports.handler = async function handler(event, context, callback) {
 
   const match = dimsAndAssetName.match(/((\d+)x(\d+))-(.+)/);
   if (match === null) {
+    console.warn(`Invalid path ${key}`);
     callback(null, invalidPathResponse());
     return;
   }
@@ -118,6 +115,7 @@ exports.handler = async function handler(event, context, callback) {
 
   // If we are restricting the allowable dimensions, make sure the request meets that.
   if (ALLOWED_DIMENSIONS.size > 0 && !ALLOWED_DIMENSIONS.has(dimensions)) {
+    console.warn(`Invalid dimensions ${dimensions}`);
     callback(null, invalidDimensionsResponse());
     return;
   }
@@ -130,14 +128,27 @@ exports.handler = async function handler(event, context, callback) {
   } catch (e) {
     // Check for not found error
     if (e.code === 'NoSuchKey') {
+      console.warn(`Key not found: ${fullResKey}`);
       callback(null, notFoundResponse(BUCKET, fullResKey));
       return;
     }
     callback(e);
     return;
   }
-  // Check that the content type of the image is supported.
-  if (!(data.ContentType in contentTypeFormatMap)) {
+
+
+  // Check that the mimetype of the image is supported.
+  // Content-Type starts with the mimetype but can have things after it.
+  // example 'image/jpeg; name=something' where jpeg is the desired result
+  const formatMatch = data.ContentType.toLowerCase().match(/image\/(\w+)(;.*)?/);
+  if (formatMatch === null) {
+    console.warn(`Unsupported image content type: ${data.ContentType}`);
+    callback(null, unsupportedFormatResponse());
+    return;
+  }
+  const imageFormat = formatMatch[1]; // example 'jpeg'
+  if (!supportedFormats.has(imageFormat)) {
+    console.warn(`Unsupported image content type: ${data.ContentType}`);
     callback(null, unsupportedFormatResponse());
     return;
   }
@@ -153,7 +164,7 @@ exports.handler = async function handler(event, context, callback) {
   try {
     buffer = await Sharp(data.Body)
       .resize(width, height)
-      .toFormat(contentTypeFormatMap[data.ContentType], contentTypeOptionsMap[data.ContentType])
+      .toFormat(imageFormat, imageFormatOptionsMap[imageFormat])
       .toBuffer();
   } catch (e) {
     callback(e);
