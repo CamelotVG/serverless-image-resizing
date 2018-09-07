@@ -6,7 +6,7 @@ image:
 	docker build --tag amazonlinux:nodejs .
 
 package: image
-	docker run --rm --volume ${PWD}/lambda:/build amazonlinux:nodejs npm install --production
+	docker run -e 'NODE_ENV=production' --rm --volume ${PWD}/lambda:/build amazonlinux:nodejs npm install
 
 dist: package
 	cd lambda && zip -FS -q -r ../dist/function.zip *

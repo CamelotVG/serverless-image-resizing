@@ -1,0 +1,12 @@
+{
+    "extends": "airbnb-base",
+    "parserOptions": {
+        "sourceType": "script"
+    },
+    "rules": {
+        "import/no-unresolved": [ 2, { "caseSensitive": false } ],
+        "import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
+        "no-console": ["error", { "allow": ["warn", "error"] }],
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+    }
+}

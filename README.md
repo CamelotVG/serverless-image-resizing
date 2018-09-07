@@ -23,30 +23,11 @@ image will be served from S3 directly.
    - Use the Amazon Linux Docker container image to build the package using your
      local system. This repo includes Makefile that will download Amazon Linux,
      install Node.js and developer tools, and build the extensions using Docker.
-     Run `make all`.
+     Run `make dist`.
 
-2. Deploy the CloudFormation stack
+2. See the repo that this was forked from for an example CloudFormation deployment.
 
-    Run `bin/deploy` to deploy the CloudFormation stack. It will create a
-    temporary Amazon S3 bucket, package and upload the function, and create the
-    Lambda function, Amazon API Gateway RestApi, and an S3 bucket for images via
-    CloudFormation.
-
-    The deployment script requires the [AWS CLI][cli] version 1.11.19 or newer
-    to be installed.
-
-3. Test the function
-
-    Upload an image to the S3 bucket and try to resize it via your web browser
-    to different sizes, e.g. with an image uploaded in the bucket called
-    image.png:
-
-    - http://[BucketWebsiteHost]/300x300/path/to/image.png
-    - http://[BucketWebsiteHost]/90x90/path/to/image.png
-    - http://[BucketWebsiteHost]/40x40/path/to/image.png
-
-    You can find the `BucketWebsiteUrl` in the table of outputs displayed on a
-    successful invocation of the deploy script.
+3. Manually upload the dist/function.zip file to Lambda. TODO: Automate this!
 
 4. (Optional) Restrict resize dimensions
 
@@ -55,6 +36,13 @@ image will be served from S3 directly.
     *(HEIGHT)x(WIDTH),(HEIGHT)x(WIDTH),...*.
 
     For example: *300x300,90x90,40x40*.
+
+## Development
+
+1. `cd lambda` then `npm install`
+2. All of the code is in `index.js` and tests are in the `spec` directory.
+3. Lint the with `npm run lint`. (Uses the airbnb style guide, standard for SDC).
+4. Run tests with `npm test`
 
 ## License
 

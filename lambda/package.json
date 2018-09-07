@@ -7,9 +7,21 @@
   "license": "Apache-2.0",
   "main": "index.js",
   "dependencies": {
-    "sharp": "^0.17.3"
+    "sharp": "^0.20.7"
   },
   "devDependencies": {
-    "aws-sdk": "^2.36.0"
+    "aws-sdk": "^2.36.0",
+    "eslint": "^5.4.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "jasmine": "^3.2.0",
+    "jasmine-sinon": "^0.4.0",
+    "mock-require": "^3.0.2",
+    "sinon": "^6.2.0"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint *.js spec/*.js",
+    "test": "jasmine"
   }
 }
