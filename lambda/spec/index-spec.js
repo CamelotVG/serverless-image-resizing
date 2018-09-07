@@ -188,7 +188,7 @@ describe('Image resize function', () => {
     return this.handler(event, null, callback);
   });
 
-  it('should return INVALID_PATH error when the path is wrong format', async function test() {
+  it('should return InvalidResizePath error when the path is wrong format', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -205,7 +205,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'INVALID_PATH',
+          code: 'InvalidResizePath',
           message: 'Path did not match expected format.',
         }),
       });
@@ -213,7 +213,7 @@ describe('Image resize function', () => {
     return this.handler(event, null, callback);
   });
 
-  it('should return INVALID_PATH error when no dimensions are included', async function test() {
+  it('should return InvalidResizePath error when no dimensions are included', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -230,7 +230,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'INVALID_PATH',
+          code: 'InvalidResizePath',
           message: 'Path did not match expected format.',
         }),
       });
@@ -238,7 +238,7 @@ describe('Image resize function', () => {
     return this.handler(event, null, callback);
   });
 
-  it('should return NOT_FOUND error when S3 cannot find original', async function test() {
+  it('should return NotFound error when S3 cannot find original', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsNotFoundPromiseWrapper());
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -255,7 +255,7 @@ describe('Image resize function', () => {
         statusCode: '404',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'NOT_FOUND',
+          code: 'NotFound',
           message: 'Asset not found in bucket example-bucket with key assets/something/img123',
         }),
       });
@@ -263,7 +263,7 @@ describe('Image resize function', () => {
     return this.handler(event, null, callback);
   });
 
-  it('should return UNSUPPORTED_FORMAT when the content type is invalid', async function test() {
+  it('should return UnsupportedFormat when the content type is invalid', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('application/pdf; foo=bar'));
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -280,7 +280,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'UNSUPPORTED_FORMAT',
+          code: 'UnsupportedFormat',
           message: 'Supported image formats: jpeg, png, webp, tiff',
         }),
       });
@@ -288,7 +288,7 @@ describe('Image resize function', () => {
     return this.handler(event, null, callback);
   });
 
-  it('should return UNSUPPORTED_FORMAT when the image type is unsupported', async function test() {
+  it('should return UnsupportedFormat when the image type is unsupported', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/heic; foo=bar'));
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -305,7 +305,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'UNSUPPORTED_FORMAT',
+          code: 'UnsupportedFormat',
           message: 'Supported image formats: jpeg, png, webp, tiff',
         }),
       });
@@ -356,7 +356,7 @@ describe('Image resize function - specific demensions', () => {
     return this.handler(event, null, callback);
   });
 
-  it('should return INVALID_DIMENSIONS error when incorrect', async function test() {
+  it('should return InvalidDimensions error when incorrect', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -373,7 +373,7 @@ describe('Image resize function - specific demensions', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'INVALID_DIMENSIONS',
+          code: 'InvalidDimensions',
           message: 'Allowed dimensions: 30x40, 50x60, 20x30',
         }),
       });
