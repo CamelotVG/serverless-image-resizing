@@ -140,7 +140,7 @@ exports.handler = async function handler(event, context, callback) {
   // Check that the mimetype of the image is supported.
   // Content-Type starts with the mimetype but can have things after it.
   // example 'image/jpeg; name=something' where jpeg is the desired result
-  const formatMatch = data.ContentType.toLowerCase().match(/image\/(\w+)(;.*)?/);
+  const formatMatch = data.ContentType.toLowerCase().match(/^image\/(\w+)(;.*)?/);
   if (formatMatch === null) {
     console.warn(`Unsupported image content type: ${data.ContentType}`);
     callback(null, unsupportedFormatResponse());

@@ -38,6 +38,16 @@ function makeGetObjectsPromiseWrapper(contentType) {
   };
 }
 
+function makeGetObjectsNotFoundPromiseWrapper() {
+  return {
+    promise() {
+      return new Promise((_, reject) => {
+        reject({ code: 'NoSuchKey' }); // eslint-disable-line prefer-promise-reject-errors
+      });
+    },
+  };
+}
+
 function makeEmptyPromiseWrapper() {
   return {
     promise() {
@@ -90,6 +100,7 @@ describe('Image resize function', () => {
     setEnvironment();
     patchS3.call(this);
     patchSharp.call(this);
+    sinon.stub(console, 'warn'); // makes test output quieter.
     // Now that everything has been patched, the handler can be loaded.
     this.handler = require('../index').handler; // eslint-disable-line global-require
   });
@@ -97,6 +108,7 @@ describe('Image resize function', () => {
   afterEach(() => {
     resetEnvironment();
     resetPatcher();
+    console.warn.restore();
     delete require.cache[require.resolve('../index')]; // force re-importing of the code.
   });
 
@@ -172,6 +184,199 @@ describe('Image resize function', () => {
         { quality: 90 },
       );
       expect(this.sharpFuncStubs.toBuffer).toHaveBeenCalled();
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should return INVALID_PATH error when the path is wrong format', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'does/not/start/with/resize/50x60-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '400',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: 'INVALID_PATH',
+          message: 'Path did not match expected format.',
+        }),
+      });
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should return INVALID_PATH error when no dimensions are included', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/no-dimensions-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '400',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: 'INVALID_PATH',
+          message: 'Path did not match expected format.',
+        }),
+      });
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should return NOT_FOUND error when S3 cannot find original', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsNotFoundPromiseWrapper());
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/50x60-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '404',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: 'NOT_FOUND',
+          message: 'Asset not found in bucket example-bucket with key assets/something/img123',
+        }),
+      });
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should return UNSUPPORTED_FORMAT when the content type is invalid', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('application/pdf; foo=bar'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/50x60-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '400',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: 'UNSUPPORTED_FORMAT',
+          message: 'Supported image formats: jpeg, png, webp, tiff',
+        }),
+      });
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should return UNSUPPORTED_FORMAT when the image type is unsupported', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/heic; foo=bar'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/50x60-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '400',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: 'UNSUPPORTED_FORMAT',
+          message: 'Supported image formats: jpeg, png, webp, tiff',
+        }),
+      });
+    };
+    return this.handler(event, null, callback);
+  });
+});
+
+describe('Image resize function - specific demensions', () => {
+  beforeEach(function before() {
+    setEnvironment();
+    process.env.ALLOWED_DIMENSIONS = '30x40,50x60,20x30';
+    patchS3.call(this);
+    patchSharp.call(this);
+    sinon.stub(console, 'warn'); // makes test output quieter.
+    // Now that everything has been patched, the handler can be loaded.
+    this.handler = require('../index').handler; // eslint-disable-line global-require
+  });
+
+  afterEach(() => {
+    resetEnvironment();
+    process.env.ALLOWED_DIMENSIONS = undefined;
+    resetPatcher();
+    console.warn.restore();
+    delete require.cache[require.resolve('../index')]; // force re-importing of the code.
+  });
+
+  it('should allow valid dimensions', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123',
+      },
+    };
+    const s3Url = 'https://s3-us-west-1.amazonaws.com/example-bucket/resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123?AWSAccessKeyId=key&Expires=12345&Signature=signature';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+    const resultUrl = 'https://configurable.url.com/example-bucket/resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123?AWSAccessKeyId=key&Expires=12345&Signature=signature';
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '303',
+        headers: { location: resultUrl },
+        body: '',
+      });
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should return INVALID_DIMENSIONS error when incorrect', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/1000x2000-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = (error, result) => {
+      expect(error).toBeNull();
+      expect(result).toEqual({
+        statusCode: '400',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: 'INVALID_DIMENSIONS',
+          message: 'Allowed dimensions: 30x40, 50x60, 20x30',
+        }),
+      });
     };
     return this.handler(event, null, callback);
   });
