@@ -4,6 +4,7 @@
 
 const patcher = require('mock-require');
 const sinon = require('sinon');
+require('jasmine-sinon'); // adds jasmine matchers for sinon mocks.
 
 // Helper functions
 function setEnvironment() {
@@ -77,14 +78,15 @@ function patchSharp() {
   }));
 
   const sharpStub = sinon.stub();
+  this.sharpStub = sharpStub;
   sharpStub.returns(sharpFuncStubs);
   patcher('sharp', sharpStub);
 }
 
 
 // Test descriptions, setup, teardown, and actual tests.
-describe('The image resize function', () => {
-  beforeEach(() => {
+describe('Image resize function', () => {
+  beforeEach(function before() {
     setEnvironment();
     patchS3.call(this);
     patchSharp.call(this);
@@ -95,9 +97,10 @@ describe('The image resize function', () => {
   afterEach(() => {
     resetEnvironment();
     resetPatcher();
+    delete require.cache[require.resolve('../index')]; // force re-importing of the code.
   });
 
-  it('should calculate the correct URL', () => {
+  it('should calculate the correct URL with good input', async function test() {
     this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
     this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
     const event = {
@@ -109,14 +112,67 @@ describe('The image resize function', () => {
     this.s3Stubs.getSignedUrl.returns(s3Url);
     const resultUrl = 'https://configurable.url.com/example-bucket/resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123?AWSAccessKeyId=key&Expires=12345&Signature=signature';
 
-    function callback(error, result) {
-      expect(error).toBe(null);
+    const callback = (error, result) => {
+      expect(error).toBeNull();
       expect(result).toEqual({
         statusCode: '303',
         headers: { location: resultUrl },
         body: '',
       });
-    }
-    this.handler(event, null, callback);
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should call the correct S3 functions', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/50x60-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = () => {
+      expect(this.s3Stubs.getObject).toHaveBeenCalledWith(
+        { Bucket: 'example-bucket', Key: 'assets/something/img123' },
+      );
+      expect(this.s3Stubs.putObject).toHaveBeenCalledWith({
+        Body: 'resized image data',
+        Bucket: 'example-bucket',
+        ContentType: 'image/jpeg; name=something',
+        Metadata: { example: 'value', 'resized-from': 'assets/something/img123' },
+        Key: 'resize/something/50x60-img123',
+      });
+      expect(this.s3Stubs.getSignedUrl).toHaveBeenCalledWith(
+        'getObject',
+        { Bucket: 'example-bucket', Key: 'resize/something/50x60-img123', Expires: 30 },
+      );
+    };
+    return this.handler(event, null, callback);
+  });
+
+  it('should call the correct Sharp functions', async function test() {
+    this.s3Stubs.getObject.returns(makeGetObjectsPromiseWrapper('image/jpeg; name=something'));
+    this.s3Stubs.putObject.returns(makeEmptyPromiseWrapper());
+    const event = {
+      queryStringParameters: {
+        key: 'resize/something/50x60-img123',
+      },
+    };
+    const s3Url = 'https://presigned.url.com/path?stuff=things';
+    this.s3Stubs.getSignedUrl.returns(s3Url);
+
+    const callback = () => {
+      expect(this.sharpStub).toHaveBeenCalledWith('original image data');
+      expect(this.sharpFuncStubs.resize).toHaveBeenCalledWith(50, 60);
+      expect(this.sharpFuncStubs.toFormat).toHaveBeenCalledWith(
+        'jpeg',
+        { quality: 90 },
+      );
+      expect(this.sharpFuncStubs.toBuffer).toHaveBeenCalled();
+    };
+    return this.handler(event, null, callback);
   });
 });
