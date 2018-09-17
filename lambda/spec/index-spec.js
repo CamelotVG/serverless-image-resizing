@@ -130,9 +130,9 @@ describe('Image resize function', () => {
         statusCode: '201',
         headers: { location: resultUrl },
         body: {
-          result: "Created",
-          location: resultUrl
-        }
+          result: 'Created',
+          location: resultUrl,
+        },
       });
     };
     return this.handler(event, null, callback);
@@ -354,9 +354,9 @@ describe('Image resize function - specific demensions', () => {
         statusCode: '201',
         headers: { location: resultUrl },
         body: {
-          result: "Created",
-          location: resultUrl
-        }
+          result: 'Created',
+          location: resultUrl,
+        },
       });
     };
     return this.handler(event, null, callback);

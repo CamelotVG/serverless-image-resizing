@@ -203,8 +203,8 @@ exports.handler = async function handler(event, context, callback) {
     statusCode: '201',
     headers: { location: redirectTo },
     body: {
-      result: "Created",
-      location: redirectTo
+      result: 'Created',
+      location: redirectTo,
     },
   });
 };
