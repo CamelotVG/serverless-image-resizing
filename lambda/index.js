@@ -36,7 +36,7 @@ function invalidPathResponse() {
     statusCode: '400',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      code: 'InvalidResizePath',
+      errorCategory: 'InvalidResizePath',
       message: 'Path did not match expected format.',
     }),
   };
@@ -48,7 +48,7 @@ function invalidDimensionsResponse() {
     statusCode: '400',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      code: 'InvalidDimensions',
+      errorCategory: 'InvalidDimensions',
       message: `Allowed dimensions: ${dimensions}`,
     }),
   };
@@ -60,7 +60,7 @@ function unsupportedFormatResponse() {
     statusCode: '400',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      code: 'UnsupportedFormat',
+      errorCategory: 'UnsupportedFormat',
       message: `Supported image formats: ${imageFormats}`,
     }),
   };
@@ -71,7 +71,7 @@ function notFoundResponse(bucket, key) {
     statusCode: '404',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      code: 'NotFound',
+      errorCategory: 'NotFound',
       message: `Asset not found in bucket ${bucket} with key ${key}`,
     }),
   };
