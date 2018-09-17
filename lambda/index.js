@@ -200,8 +200,11 @@ exports.handler = async function handler(event, context, callback) {
 
   // Redirect to the newly created image
   callback(null, {
-    statusCode: '303',
+    statusCode: '201',
     headers: { location: redirectTo },
-    body: '',
+    body: {
+      result: "Created",
+      location: redirectTo
+    },
   });
 };

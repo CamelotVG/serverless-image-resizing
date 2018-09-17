@@ -127,9 +127,12 @@ describe('Image resize function', () => {
     const callback = (error, result) => {
       expect(error).toBeNull();
       expect(result).toEqual({
-        statusCode: '303',
+        statusCode: '201',
         headers: { location: resultUrl },
-        body: '',
+        body: {
+          result: "Created",
+          location: resultUrl
+        }
       });
     };
     return this.handler(event, null, callback);
@@ -348,9 +351,12 @@ describe('Image resize function - specific demensions', () => {
     const callback = (error, result) => {
       expect(error).toBeNull();
       expect(result).toEqual({
-        statusCode: '303',
+        statusCode: '201',
         headers: { location: resultUrl },
-        body: '',
+        body: {
+          result: "Created",
+          location: resultUrl
+        }
       });
     };
     return this.handler(event, null, callback);
