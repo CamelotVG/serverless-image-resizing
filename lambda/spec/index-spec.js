@@ -205,7 +205,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'InvalidResizePath',
+          errorCategory: 'InvalidResizePath',
           message: 'Path did not match expected format.',
         }),
       });
@@ -230,7 +230,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'InvalidResizePath',
+          errorCategory: 'InvalidResizePath',
           message: 'Path did not match expected format.',
         }),
       });
@@ -255,7 +255,7 @@ describe('Image resize function', () => {
         statusCode: '404',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'NotFound',
+          errorCategory: 'NotFound',
           message: 'Asset not found in bucket example-bucket with key assets/something/img123',
         }),
       });
@@ -280,7 +280,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'UnsupportedFormat',
+          errorCategory: 'UnsupportedFormat',
           message: 'Supported image formats: jpeg, png, webp, tiff',
         }),
       });
@@ -305,7 +305,7 @@ describe('Image resize function', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'UnsupportedFormat',
+          errorCategory: 'UnsupportedFormat',
           message: 'Supported image formats: jpeg, png, webp, tiff',
         }),
       });
@@ -373,7 +373,7 @@ describe('Image resize function - specific demensions', () => {
         statusCode: '400',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: 'InvalidDimensions',
+          errorCategory: 'InvalidDimensions',
           message: 'Allowed dimensions: 30x40, 50x60, 20x30',
         }),
       });
