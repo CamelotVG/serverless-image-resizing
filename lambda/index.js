@@ -202,9 +202,9 @@ exports.handler = async function handler(event, context, callback) {
   callback(null, {
     statusCode: '201',
     headers: { location: redirectTo },
-    body: {
+    body: JSON.stringify({
       result: 'Created',
       location: redirectTo,
-    },
+    }),
   });
 };
