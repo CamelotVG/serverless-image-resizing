@@ -77,14 +77,20 @@ function notFoundResponse(bucket, key) {
   };
 }
 
-// Success response definition
-
+// Main handler called by directly invoking the function
+exports.invoke = async function invoke(event, context, callback) {
+  const key = event.key;
+  await execute(key, context, callback);
+}
 
 // Main handler called by API gateway
 exports.handler = async function handler(event, context, callback) {
   const { key } = event.queryStringParameters;
-  // example: 'resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123'
+  await execute(key, context, callback);
+};
 
+async function execute(key, context, callback) {
+  // example: 'resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123'
   const fullPath = key.split('/');
   // example: ['resize','75c06d3b-4342-4ab8-aa37-b1f01d654ac1','private','avatar','50x60-img123']
   if (fullPath.length < 2 || fullPath[0] !== 'resize') {
@@ -207,4 +213,4 @@ exports.handler = async function handler(event, context, callback) {
       location: redirectTo,
     }),
   });
-};
+}
