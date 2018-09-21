@@ -129,10 +129,10 @@ describe('Image resize function', () => {
       expect(result).toEqual({
         statusCode: '201',
         headers: { location: resultUrl },
-        body: {
+        body: JSON.stringify({
           result: 'Created',
           location: resultUrl,
-        },
+        }),
       });
     };
     return this.handler(event, null, callback);
@@ -353,10 +353,10 @@ describe('Image resize function - specific demensions', () => {
       expect(result).toEqual({
         statusCode: '201',
         headers: { location: resultUrl },
-        body: {
+        body: JSON.stringify({
           result: 'Created',
           location: resultUrl,
-        },
+        }),
       });
     };
     return this.handler(event, null, callback);
