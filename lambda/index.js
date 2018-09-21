@@ -173,10 +173,12 @@ async function execute(key, context, callback) {
       .toBuffer();
   } catch (e) {
     if (e.message.includes('unable to write to buffer')) {
+      console.warn(e);
       callback(null, dimensionsTooLarge());
       return;
     }
-
+    
+    console.error(e);
     callback(e);
     return;
   }
