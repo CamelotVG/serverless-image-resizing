@@ -54,6 +54,17 @@ function invalidDimensionsResponse() {
   };
 }
 
+function dimensionsTooLarge() {
+  return {
+    statusCode: '400',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      errorCategory: 'DimensionsTooLarge',
+      message: 'The resulting image for the requested dimensions was too large to handle.',
+    }),
+  };
+}
+
 function unsupportedFormatResponse() {
   const imageFormats = Array.from(supportedFormats).join(', ');
   return {
@@ -76,18 +87,6 @@ function notFoundResponse(bucket, key) {
     }),
   };
 }
-
-// Main handler called by directly invoking the function
-exports.invoke = async function invoke(event, context, callback) {
-  const key = event.key;
-  await execute(key, context, callback);
-}
-
-// Main handler called by API gateway
-exports.handler = async function handler(event, context, callback) {
-  const { key } = event.queryStringParameters;
-  await execute(key, context, callback);
-};
 
 async function execute(key, context, callback) {
   // example: 'resize/75c06d3b-4342-4ab8-aa37-b1f01d654ac1/private/avatar/50x60-img123'
@@ -173,6 +172,11 @@ async function execute(key, context, callback) {
       .toFormat(imageFormat, imageFormatOptionsMap[imageFormat])
       .toBuffer();
   } catch (e) {
+    if (e.message.includes('unable to write to buffer')) {
+      callback(null, dimensionsTooLarge());
+      return;
+    }
+
     callback(e);
     return;
   }
@@ -214,3 +218,15 @@ async function execute(key, context, callback) {
     }),
   });
 }
+
+// Main handler called by directly invoking the function
+exports.invoke = async function invoke(event, context, callback) {
+  const { key } = event;
+  await execute(key, context, callback);
+};
+
+// Main handler called by API gateway
+exports.handler = async function handler(event, context, callback) {
+  const { key } = event.queryStringParameters;
+  await execute(key, context, callback);
+};
